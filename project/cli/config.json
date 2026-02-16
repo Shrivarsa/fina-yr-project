@@ -1,0 +1,5 @@
+{
+  "api_url": "http://localhost:5000",
+  "user": "cli-user",
+  "network": "ethereum-testnet"
+}
