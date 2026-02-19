@@ -1,0 +1,38 @@
+# --- Authentication & Secrets ---
+# NEVER commit these files - they contain your S3, Supabase, and OpenRouter keys
+.env
+.env.local
+.env.development
+.env.production
+.scip_auth
+config.json
+
+# --- Python (Backend & CLI) ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+*.log
+scip_database.db
+
+# --- Node.js & React (Frontend & Blockchain) ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+/frontend/dist/
+/frontend/build/
+
+# --- Hardhat (Blockchain) ---
+/blockchain/artifacts/
+/blockchain/cache/
+/blockchain/typechain/
+/blockchain/typechain-types/
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
