@@ -1,7 +1,22 @@
-flask==3.0.0
-flask-cors==4.0.0
-requests==2.31.0
-web3==6.11.3
-supabase==2.4.3
-python-dotenv==1.0.0
-boto3==1.34.0
+# ── Web Framework & Security ────────────────────────────────────────────────
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# ── Supabase & Authentication ───────────────────────────────────────────────
+supabase>=2.4.3
+
+# ── HTTP, Utilities & Environment ───────────────────────────────────────────
+requests>=2.31.0
+python-dotenv>=1.0.0
+joblib>=1.3.2
+
+# ── AWS S3 Storage (Required) ───────────────────────────────────────────────
+boto3>=1.34.0
+
+# ── Blockchain / DLT Integration ────────────────────────────────────────────
+web3>=6.11.3
+
+# ── Custom AI/ML Model & Background Learning ────────────────────────────────
+scikit-learn>=1.4.0
+scipy>=1.12.0
+numpy>=1.26.0

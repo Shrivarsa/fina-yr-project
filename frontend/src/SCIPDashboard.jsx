@@ -10,6 +10,10 @@ export default function SCIPDashboard() {
   const [logs, setLogs] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [selectedCommit, setSelectedCommit] = useState(null);
+  const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+  const [isLoadingCode, setIsLoadingCode] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     if (accessToken) {
@@ -97,6 +101,69 @@ export default function SCIPDashboard() {
     ) : (
       <XCircle className="w-5 h-5 text-red-400" />
     );
+  };
+
+  const handleViewCode = async (log) => {
+    if (!accessToken) return;
+    setIsLoadingCode(true);
+    setIsCodeModalOpen(true);
+    setSelectedCommit(null);
+
+    try {
+      const response = await fetch(`${API_URL}/api/commits/${log.commit_id}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch commit details');
+      }
+
+      const data = await response.json();
+      setSelectedCommit({
+        ...log,
+        code_content: data.code_content || '',
+      });
+    } catch (err) {
+      console.error('Error fetching commit details:', err);
+      setError('Failed to load commit code. Please try again.');
+      setIsCodeModalOpen(false);
+    } finally {
+      setIsLoadingCode(false);
+    }
+  };
+
+  const handleDownloadCode = async (log) => {
+    if (!accessToken) return;
+    setIsDownloading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/commits/${log.commit_id}/download`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download commit code');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `commit_${log.commit_hash}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading commit code:', err);
+      setError('Failed to download commit code. Please try again.');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -192,7 +259,12 @@ export default function SCIPDashboard() {
                 <div className="bg-cyan-600 p-2 rounded-lg">
                   <Activity className="w-5 h-5 text-white" />
                 </div>
-                <h2 className="text-2xl font-semibold text-gray-100">Real-time Audit Log</h2>
+                <div>
+                  <h2 className="text-2xl font-semibold text-gray-100">Real-time Audit Log</h2>
+                  <p className="text-xs text-gray-400">
+                    View and download your previous analyzed commits
+                  </p>
+                </div>
               </div>
               <span className="text-sm text-gray-400">{logs.length} commits</span>
             </div>
@@ -251,6 +323,22 @@ export default function SCIPDashboard() {
                         </div>
                       )}
                     </div>
+
+                    <div className="mt-3 flex justify-end space-x-2">
+                      <button
+                        onClick={() => handleViewCode(log)}
+                        className="text-xs px-3 py-1 rounded-md border border-blue-500 text-blue-400 hover:bg-blue-500/10 transition-colors"
+                      >
+                        View code
+                      </button>
+                      <button
+                        onClick={() => handleDownloadCode(log)}
+                        disabled={isDownloading}
+                        className="text-xs px-3 py-1 rounded-md border border-cyan-500 text-cyan-400 hover:bg-cyan-500/10 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {isDownloading ? 'Downloading...' : 'Download'}
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
@@ -279,6 +367,42 @@ export default function SCIPDashboard() {
           background: #6b7280;
         }
       `}</style>
+
+      {isCodeModalOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-gray-900 border border-gray-700 rounded-xl shadow-2xl max-w-3xl w-full mx-4 max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-100">Commit Code</h3>
+                {selectedCommit && (
+                  <p className="text-xs text-gray-400 mt-1 font-mono truncate">
+                    {selectedCommit.commit_hash}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  setIsCodeModalOpen(false);
+                  setSelectedCommit(null);
+                }}
+                className="text-gray-400 hover:text-gray-200 text-sm"
+              >
+                Close
+              </button>
+            </div>
+            <div className="p-4 overflow-auto flex-1 bg-black/40">
+              {isLoadingCode && (
+                <p className="text-sm text-gray-400">Loading commit code...</p>
+              )}
+              {!isLoadingCode && selectedCommit && (
+                <pre className="text-xs text-gray-200 font-mono whitespace-pre-wrap">
+{selectedCommit.code_content || '// No code content stored for this commit.'}
+                </pre>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
